@@ -1,0 +1,102 @@
+Auction Platform Backend – Documentation & Best Practices
+
+Tech Stack & Main Libraries
+- Node.js + TypeScript: Strong typing, maintainability, and scalability.
+- Express.js: REST API framework.
+- MongoDB + Mongoose: NoSQL database with schema validation.
+- Stripe: Payment processing, customer wallets, and payouts (Stripe Connect).
+- Socket.io: Real-time chat and reactions.
+- Joi: Request validation.
+- http-status-codes: Standardized HTTP status codes.
+- node-cron: Background job scheduling.
+- express-async-errors: Async error handling middleware.
+
+Project Structure & Key Modules
+- src/controllers/: Business logic for products, bids, chat, authentication, payments, and reactions.
+- src/models/: Mongoose schemas for User, Product, Bid, Chat, Reaction.
+- src/routes/: Express routers for each resource.
+- src/middlewares/: Authentication, role-based access, validation, and error handling.
+- src/services/stripeService.ts: Stripe API integration.
+- src/socket/: Socket.io server setup and event handling.
+- src/jobs/: Background jobs (e.g., bidChecker for ending auctions).
+- src/config/: Centralized environment and DB config.
+- src/utils/: Response helpers and validation utilities.
+
+Key Features & Approaches
+1. Authentication & Authorization
+- JWT-based authentication.
+- Role-based access control (admin/user) via middleware.
+- Type-safe user extraction from requests.
+
+2. Product & Auction Management
+- Products can be listed, created, and associated with a creator (userId).
+- Auctions have a lastBidTime and a bidEnded boolean for state management.
+- Stripe product and price are created for each product.
+
+3. Bidding System
+- Bids are placed with validation (no duplicate bids, owner cannot bid, must be higher than last bid).
+- Background job (bidChecker) automatically ends auctions, finds the top bidder, and processes payment.
+
+4. Payment Processing (Stripe)
+- Users save payment methods via Stripe Elements; backend stores the payment method ID.
+- When an auction ends, the top bidder is charged using their saved payment method.
+- Funds are transferred to the seller using Stripe Connect (requires seller to have a connected account).
+- All payment actions are secure and PCI-compliant (no raw card data stored).
+
+5. Real-Time Chat & Reactions
+- Socket.io enables real-time chat and message reactions per product.
+- Users join product-specific rooms for targeted updates.
+- All chat and reaction events are broadcast to relevant users.
+
+6. Validation & Error Handling
+- Joi schemas validate all incoming requests.
+- Centralized error handler middleware for consistent error responses.
+- express-async-errors ensures async errors are caught and handled.
+
+7. Background Jobs
+- bidChecker runs on a schedule to process ended auctions, select winners, and handle payments.
+- Jobs are automated and run with the app.
+
+8. API Testing & Documentation
+- All endpoints are testable via Postman (collection provided).
+- Sample request bodies and curl commands are documented for easy testing.
+
+Best Practices Used
+- Type Safety: TypeScript throughout, including custom types for Express Request.
+- Separation of Concerns: Controllers, routes, models, and services are modular.
+- DRY Principle: Shared validation and error handling logic.
+- Security: No sensitive data (like card numbers) is stored; Stripe handles all PCI compliance.
+- Scalability: Real-time features and background jobs are decoupled from main request flow.
+- Maintainability: Centralized config, clear folder structure, and concise comments.
+
+How the Main Flows Work
+User Registration & Auth
+- User signs up, Stripe customer is created, JWT is issued.
+- Authenticated routes require a valid JWT.
+
+Product & Auction
+- Users create products (optionally as auctions).
+- Auctions have a set end time (lastBidTime).
+
+Bidding
+- Users place bids; validation ensures only valid bids are accepted.
+- When auction ends, bidChecker finds the top bid and processes payment.
+
+Payment
+- Users save payment methods via Stripe Elements.
+- On auction end, backend charges the winner and pays out to the seller.
+
+Chat & Reactions
+- Real-time chat and reactions via Socket.io.
+- All chat and reaction data is also persisted in MongoDB.
+
+API Testing
+- All endpoints are documented and testable via Postman and curl.
+
+How to Extend or Maintain
+- Add new features by creating new controllers and routes.
+- Add new background jobs in src/jobs/.
+- Update validation schemas in src/validators/.
+- Use the provided Postman collection for API testing.
+
+This project follows industry best practices for a modern, secure, and scalable auction platform backend.
